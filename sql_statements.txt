@@ -1,0 +1,1 @@
+INSERT INTO DIREGISTER.EVENTS VALUES ('DAT263_2',40,'https://vsystem.ingress.dh-6srbrjhsl.dh-canary.shoot.live.k8s-hana.ondemand.com/login/?tenant=dat263','2020-12-09 14:15:00','2020-12-09 14:45:00','263')

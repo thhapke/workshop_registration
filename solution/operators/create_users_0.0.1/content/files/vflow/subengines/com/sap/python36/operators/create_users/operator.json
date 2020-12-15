@@ -1,0 +1,23 @@
+{
+    "description": "Create Users Credentials",
+    "component": "com.sap.system.python3Operator",
+    "inports": null,
+    "outports": [
+        {
+            "name": "users",
+            "type": "message.file",
+            "description": "new user"
+        }
+    ],
+    "config": {
+        "$type": "http://sap.com/vflow/create_users.configSchema.json",
+        "script": "file://create_users.py",
+        "num_users": 90,
+        "root_name": "ted_",
+        "pwd_length": 6
+    },
+    "tags": {
+        "": ""
+    },
+    "iconsrc": "create_users.svg"
+}

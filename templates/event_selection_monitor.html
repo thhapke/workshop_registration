@@ -1,0 +1,40 @@
+{% extends "baseadmin.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Event Selection Monitor{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>Event Selection</h1>
+</div>
+    <div>
+{{ wtf.quick_form(form) }}
+    <br><br><br>
+    </div>
+
+<div class="col-sm-12">
+    <div class="page-header">
+    <h1>Schedule</h1>
+    </div>
+    </div>
+
+    <table class="table">
+    <thead>
+    <tr>
+            {% for hi in dictlist[0] %}
+        <th scope="col">{{ hi }}</th>
+        {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+    {%  for row in dictlist %}
+    <tr>
+        {%  for val in row.values() %}
+        <td>{{ val }}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+{% endblock %}

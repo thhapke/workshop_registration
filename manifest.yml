@@ -1,0 +1,8 @@
+---
+applications:
+- name: monitor
+  host: monitor
+  memory: 256M
+  disk_quota: 512M
+  timeout: 60
+  buildpack: https://github.com/cloudfoundry/buildpack-python.git
