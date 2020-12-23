@@ -1,10 +1,10 @@
 {% extends "baseadmin.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}Edit Workshops{% endblock %}
+{% block title %}Login{% endblock %}
 
 {% block page_content %}
-    {% with messages = get_flashed_messages() %}
+{% with messages = get_flashed_messages() %}
   {% if messages %}
         {% for message in get_flashed_messages() %}
             <div class="alert alert-success">
@@ -15,9 +15,7 @@
   {% endif %}
 {% endwith %}
 <div class="page-header">
-    <h2>Edit Workshops of {{ user_id }}</h2>
+    <h2>Login</h2>
+    {{ wtf.quick_form(form) }}
 </div>
-    <div>
-      {{ wtf.quick_form(form) }}
-    </div>
 {% endblock %}

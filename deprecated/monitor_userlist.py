@@ -100,7 +100,7 @@ def index():
     if form.validate_on_submit() :
         event = form.selected_event.data
         user_list = get_userlist(event)
-        return  render_template('userlist_monitor.html',dictlist = user_list,event = event )
+        return  render_template('userlist_monitor.html', dictlist = user_list, event = event)
 
     return render_template('event_selection_monitor.html', form = form, dictlist = events)
 

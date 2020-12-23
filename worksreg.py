@@ -1,0 +1,301 @@
+from flask import Flask, render_template, Response, session, redirect, url_for, flash
+from flask_bootstrap import Bootstrap
+from flask_moment import Moment
+from flask_wtf import FlaskForm
+from flask_login import login_user, LoginManager, UserMixin, login_required, logout_user
+from wtforms import StringField, SubmitField, IntegerField, SelectField, BooleanField, SelectMultipleField, DateTimeField, PasswordField
+from wtforms.validators import DataRequired
+
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from register import register
+from workshops_model import *
+from users_dbcalls import *
+from moderator_model import get_moderator, register_moderator
+
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'userListGenthh'
+app.register_blueprint(register)
+
+bootstrap = Bootstrap(app)
+moment = Moment(app)
+
+
+# global variable
+event = ''
+prefix = 'TAU'
+dft_event_id = 'NEW_ID'
+dft_title = 'SAP DI Hands-on Workshop'
+dft_max_user = 40
+dft_tenant = 'default'
+dft_url = 'https://vsystem.ingress.dh-ia37o5zq.dhaas-live.shoot.live.k8s-hana.ondemand.com/login/?redirectUrl=%2Flogin%2F%3FredirectUrl%3D%252Fapp%252Fdatahub-app-launchpad%252F&tenant=default'
+dt_format = '%Y-%m-%d %H:%M'
+dft_pwd = 'Welcome01'
+
+user_list = []
+
+# HANA DB
+db_host = '559888d5-f0af-4907-ad20-fa4d3876e870.hana.prod-eu10.hanacloud.ondemand.com'
+db_user = 'DIREGISTER'
+db_pwd = 'Ted2345!'
+db_port = '443'
+
+############
+#### Login
+############
+login_manager = LoginManager()
+login_manager.init_app(app)
+admin_id = 'thhadmin'
+admin_pwd = 'thh2Reg4'
+
+class User(UserMixin) :
+    def __init__(self,user):
+        self.username, self.password_hash = get_moderator(user)
+        self.id = self.username
+
+    @property
+    def password(self):
+        raise AttributeError('Password not a readable attribute')
+
+    @password.setter
+    def password(self,password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self,password):
+        return check_password_hash(self.password_hash,password)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User(user_id)
+
+@login_manager.unauthorized_handler
+def unauthorized_callback():
+    return redirect('/login')
+
+############
+### Forms
+############
+class UserGenerationSelectForm(FlaskForm):
+    selected_events = SelectMultipleField('Workshops (Multi-Selection): ',choices=[], validators=[DataRequired()])
+    prefix = StringField('Prefix: ', validators=[DataRequired()],default='TA')
+    num_user = IntegerField('Number of User: ', validators=[DataRequired()],default=8)
+    offset = IntegerField('Offset: ', default=1)
+    num_buffer_user = IntegerField('Number of Buffer User: ', validators=[DataRequired()], default=2)
+    static_pwd = BooleanField('Static Password: ', validators=[DataRequired()],default=True)
+    len_pwd = IntegerField('Length of Password: ', validators=[DataRequired()],default=8)
+    default_pwd = StringField('Default Password: ',validators=[DataRequired()], default=dft_pwd)
+    submit = SubmitField('Create')
+
+class MonitorSelectForm(FlaskForm):
+    selected_event = SelectField('',choices=[], validators=[DataRequired()])
+    selected_event.label = None
+    submit = SubmitField('Submit')
+
+class EditForm(FlaskForm):
+    selected_event = SelectField('Workshops',choices=[], validators=[DataRequired()])
+    submitget = SubmitField('Get')
+    event_id = StringField('Event ID: ', validators=[DataRequired()],default=dft_event_id)
+    title = StringField('Title: ', validators=[DataRequired()],default=dft_title)
+    now_dt = datetime.utcnow()
+    event_dt = now_dt + timedelta(hours=1) - timedelta(minutes=now_dt.minute)
+    event_startdate = DateTimeField('Event Start Datetime (Example: 2020-12-31 9:30)',validators=[DataRequired()],format=dt_format,default=event_dt)
+    regstart_dt = event_dt - timedelta(hours=1)
+    reg_startdate = DateTimeField('Registration Start Datetime (Example: 2020-12-31 9:30)',validators=[DataRequired()],format=dt_format,default=regstart_dt)
+    regstop_dt = event_dt + timedelta(minutes=15)
+    reg_enddate = DateTimeField('Registration End Datetime (Example: 2020-12-31 9:30)', validators=[DataRequired()], format=dt_format,default=regstop_dt)
+    max_user = IntegerField("Maximum User",validators=[DataRequired()],default=dft_max_user)
+    tenant = StringField('Tenant: ', validators=[DataRequired()],default=dft_tenant)
+    url = StringField('System ULR: ', validators=[DataRequired()],default= dft_url)
+    submitsave = SubmitField('Save')
+    submitremove = SubmitField('Remove')
+
+class EventFilter(FlaskForm) :
+    incl_ended = BooleanField('Include \"ended registration\"-workshops',default=False)
+    submitrefresh = SubmitField('Refresh')
+
+class UserListForm(FlaskForm) :
+    savedownload = SubmitField('Save&Download')
+
+class LoginForm(FlaskForm) :
+    username = StringField('User Name',validators=[])
+    password = PasswordField('Password',validators=[])
+    submitlogin = SubmitField('Log In')
+    submitregister = SubmitField('Register')
+    submitlogout = SubmitField('Log Out')
+
+############
+### BINDINGS
+############
+@app.route('/login', methods = ['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit() :
+        if form.submitlogin.data :
+            user = User(form.username.data)
+            if not user.username :
+                flash('Unregisterd user: {}'.format(form.username.data))
+            else :
+                if not user.verify_password(form.password.data) :
+                    flash('Invalid password.')
+                else :
+                    login_user(user)
+                    return redirect(url_for('index'))
+        elif form.submitregister.data  :
+            if len(form.password.data) < 6 :
+                flash('Minimum length of password: 6.')
+            elif len(form.username.data) < 6 :
+                flash('Minimum length of user name: 6.')
+            else :
+                register_moderator(form.username.data,generate_password_hash(form.password.data))
+                user = User(form.username.data)
+                login_user(user)
+                return redirect(url_for('index'))
+        else :
+            logout_user()
+            flash('You have been logged out.')
+
+    return render_template('login.html',form=form)
+
+
+@app.route('/', methods = ['GET', 'POST'])
+@login_required
+def index():
+    events, select_titles = get_workshops(incl_ended=False,user_id=session['_user_id'])
+    eventform = EventFilter()
+
+    if eventform.validate_on_submit():
+        incl_ended = eventform.incl_ended.data
+        events, select_titles = get_workshops(incl_ended=incl_ended,user_id=session['_user_id'] )
+
+    return render_template('events.html',form = eventform,dictlist=events.values(),user_id=session['_user_id'])
+
+
+@app.route('/monitor', methods = ['GET', 'POST'])
+@login_required
+def monitor():
+    events, select_titles = get_workshops(incl_ended = True,user_id=session['_user_id'])
+    form = MonitorSelectForm()
+    form.selected_event.choices = select_titles
+    if form.validate_on_submit() :
+        event = form.selected_event.data
+        user_list = get_userlist(event)
+        return  render_template('userlist_monitor.html',dictlist = user_list,event = event )
+
+    return render_template('event_selection_monitor.html',form = form,dictlist = events.values(), user_id=session['_user_id'])
+
+@app.route('/generate', methods = ['GET', 'POST'])
+@login_required
+def generate():
+    global event
+    global prefix
+    global user_list
+    events, select_titles = get_workshops(incl_ended = True,user_id=session['_user_id'])
+    form = UserGenerationSelectForm()
+    form.selected_events.choices = select_titles
+    if form.validate_on_submit() :
+        session['workshop_ids'] = form.selected_events.data
+        session['prefix'] = form.prefix.data
+        session['num_user'] = form.num_user.data
+        session['offset'] = form.offset.data
+        session['num_buffer_user'] = form.num_buffer_user.data
+        session['len_pwd'] = form.len_pwd.data
+        session['default_pwd'] = form.default_pwd.data
+        session['static_pwd'] = form.static_pwd.data
+
+        return redirect(url_for('userlist'))
+
+    return render_template('generate_user.html',form = form, user_id=session['_user_id'])
+
+
+@app.route('/userlist', methods = ['GET', 'POST'])
+@login_required
+def userlist() :
+    user_list = generate_userlist(selected_events=session['workshop_ids'],
+                                  prefix=session['prefix'],
+                                  num_user=session['num_user'],
+                                  offset=session['offset'],
+                                  num_buffer_user=session['num_buffer_user'],
+                                  len_pwd=session['len_pwd'],
+                                  default_pwd=session['default_pwd'],
+                                  static_pwd=session['static_pwd'])
+    user_dictlist = [{'Index': u[0], 'Workshop': u[3], 'User': u[1], 'Password': u[2], 'Buffer': u[4]} for u in
+                     user_list]
+    form = UserListForm()
+
+    if form.validate_on_submit() :
+        wss = '-'.join(session['workshop_ids'])
+        save_users(user_list=user_list)
+        filename = 'userlist_' + wss + '_' + str(len(user_list)) + '.csv'
+        csv = '\n'.join([','.join(iuser[1:-1]) for iuser in user_list])
+        flash('User list saved to database!')
+        Response(csv, mimetype="text/csv", headers={"Content-disposition": "attachment; filename={}".format(filename)})
+
+
+    return render_template('userlist.html', form = form,dictlist=user_dictlist,user_id = session['_user_id'])
+
+
+@app.route('/edit', methods = ['GET', 'POST'])
+@login_required
+def edit():
+    form = EditForm()
+    workshops, ws_titles = get_workshops(incl_ended = True,user_id=session['_user_id'])
+    ws_titles.insert(0,('NEW','NEW'))
+    form.selected_event.choices = ws_titles
+    if form.validate_on_submit() and form.submitget.data  :
+        event_selected = form.selected_event.data
+        # POPULATE Selected EVENT
+        if event_selected == 'NEW' :
+            form.event_id.data = dft_event_id
+            form.title.data = dft_title
+            now_dt = datetime.utcnow()
+            event_dt = now_dt + timedelta(hours=1) - timedelta(minutes=now_dt.minute)
+            form.event_startdate.data = event_dt.strftime(dt_format)
+            form.reg_startdate.data = (event_dt - timedelta(hours=1)).strftime(dt_format)
+            form.reg_enddate.data = (event_dt + timedelta(minutes=15)).strftime(dt_format)
+            form.max_user.data = dft_max_user
+            form.tenant.data = dft_tenant
+            form.url.data = dft_url
+        else :
+            # POPULATE NEW EVENT
+            event = get_workshop(event_selected)
+            form.event_id.data = event['ID']
+            form.title.data = event['Title']
+            form.event_startdate.data = event["Workshop Start"]
+            form.reg_startdate.data = event["Regist. Start"]
+            form.reg_enddate.data = event["Regist. End"]
+            form.max_user.data = event['Max. User']
+            form.tenant.data = event['Tenant']
+            form.url.data = event['url']
+    # SAVE EVENT
+    elif form.validate_on_submit() and form.submitsave.data:
+        record = {'title':form.title.data,'max_user':form.max_user.data,'url':form.url.data,'registration_start':form.reg_startdate.data,\
+                  'registration_end':form.reg_enddate.data,'tenant':form.tenant.data,'id':form.event_id.data,'workshop_start':form.event_startdate.data}
+        save_event(record,user_id=session['_user_id'])
+        flash('Workshop saved: {}'.format(record['id']))
+
+    # REMOVE EVENT
+    elif form.validate_on_submit() and form.submitremove.data:
+        removed_workshop = form.event_id.data
+        remove_event(form.event_id.data)
+        form.event_id.data = dft_event_id
+        form.title.data = dft_title
+        now_dt = datetime.utcnow()
+        event_dt = now_dt + timedelta(hours=1) - timedelta(minutes=now_dt.minute)
+        form.event_startdate.data = event_dt.strftime(dt_format)
+        form.reg_startdate.data = (event_dt - timedelta(hours=1)).strftime(dt_format)
+        form.reg_enddate.data = (event_dt + timedelta(minutes=15)).strftime(dt_format)
+        form.max_user.data = dft_max_user
+        form.tenant.data = dft_tenant
+        form.url.data = dft_url
+        workshops, ws_titles = get_workshops(incl_ended = True)
+        ws_titles.insert(0, ('NEW', 'NEW'))
+        form.selected_event.choices = ws_titles
+        flash('Workshop removed: {}'.format(removed_workshop))
+    return render_template('edit.html', form = form, user_id = session['_user_id'] )
+
+
+
+if __name__ == '__main__':
+    app.run('0.0.0.0', port=8080)

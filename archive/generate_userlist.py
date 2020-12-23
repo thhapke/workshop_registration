@@ -105,7 +105,7 @@ def index():
 
         return  render_template('userlist.html', dictlist = user_dictlist)
 
-    return render_template('generate_user.html',form = form)
+    return render_template('generate_user.html', form = form)
 
 @app.route('/downloadsave/')
 def downloadsave():
