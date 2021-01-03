@@ -1,0 +1,33 @@
+{% extends "baseadmin.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}DI Register Admin{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>Workshops  ({{ user_id }})</h2>
+
+
+<table class="table">
+    <! -- HEADER -->
+    <thead>
+        <tr>
+        {% for hi in table_header %}
+        <th scope="col">{{ hi }}</th>
+        {% endfor %}
+        </tr>
+    </thead>
+    <! -- BODY -->
+    <tbody>
+        {%  for row in table_body %}
+        <tr>
+            {%  for val in row.values() %}
+            <td>{{ val }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</div>
+{% endblock %}

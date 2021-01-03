@@ -1,0 +1,12 @@
+{% extends "baseadmin.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Upload User List{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>Upload User List ({{ user_id }})</h2>
+<p class="text-body"></p>
+</div>
+{{ wtf.quick_form(form) }}
+{% endblock %}

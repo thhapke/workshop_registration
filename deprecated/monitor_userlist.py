@@ -102,7 +102,7 @@ def index():
         user_list = get_userlist(event)
         return  render_template('userlist_monitor.html', dictlist = user_list, event = event)
 
-    return render_template('event_selection_monitor.html', form = form, dictlist = events)
+    return render_template('workshop_selection_monitor.html', form = form, dictlist = events)
 
 
 if __name__ == '__main__':

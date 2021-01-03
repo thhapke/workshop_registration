@@ -25,7 +25,7 @@ class NameForm(FlaskForm):
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('notopen.html'), 404
+    return render_template('../deprecated/notopen.html'), 404
 
 @app.errorhandler(500)
 def internal_server_error(e):
@@ -39,19 +39,19 @@ def index():
         name = form.name.data
         status, resp = call_restapi(name)
         if status == 404:
-            return render_template('notopen.html')
+            return render_template('../deprecated/notopen.html')
         else:
             if resp['status'] == 'notready' :
-                return render_template('notready.html',ws_title = resp['title'])
+                return render_template('../deprecated/notready.html', ws_title = resp['title'])
             elif resp['status'] == 'nouser' :
-                return render_template('nouser.html',ws_title = resp['title'])
+                return render_template('../deprecated/nouser.html', ws_title = resp['title'])
             elif resp['status'] == 'exist' :
-                return render_template('credentials_exist.html', name = resp['name'],user= resp['user'], pwd = resp['password'],
-                                   b64 = resp['base64auth'],url = resp['url'],ws_title = resp['title'])
+                return render_template('../deprecated/credentials_exist.html', name = resp['name'], user= resp['user'], pwd = resp['password'],
+                                       b64 = resp['base64auth'], url = resp['url'], ws_title = resp['title'])
             else :
                 return render_template('credentials.html',name = resp['name'],user= resp['user'], pwd = resp['password'],
                                    b64 = resp['base64auth'],url = resp['url'],ws_title = resp['title'])
-    return render_template('diregister.html',form = form)
+    return render_template('../deprecated/diregister.html', form = form)
 
 def call_restapi(name) :
     # send request

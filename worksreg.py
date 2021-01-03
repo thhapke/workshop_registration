@@ -1,21 +1,28 @@
-from flask import Flask, render_template, Response, session, redirect, url_for, flash
+from flask import Flask, render_template, Response, session, redirect, url_for, flash, abort, send_file
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_wtf import FlaskForm
 from flask_login import login_user, LoginManager, UserMixin, login_required, logout_user
 from wtforms import StringField, SubmitField, IntegerField, SelectField, BooleanField, SelectMultipleField, DateTimeField, PasswordField
+from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms.validators import DataRequired
 
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 
 from register import register
 from workshops_model import *
-from users_dbcalls import *
+from users_model import *
 from moderator_model import get_moderator, register_moderator
+from datetime import datetime
 
+import os
+import pandas as pd
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'userListGenthh'
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024
+app.config['UPLOAD_EXTENSIONS'] = ['.csv']
 app.register_blueprint(register)
 
 bootstrap = Bootstrap(app)
@@ -32,14 +39,11 @@ dft_tenant = 'default'
 dft_url = 'https://vsystem.ingress.dh-ia37o5zq.dhaas-live.shoot.live.k8s-hana.ondemand.com/login/?redirectUrl=%2Flogin%2F%3FredirectUrl%3D%252Fapp%252Fdatahub-app-launchpad%252F&tenant=default'
 dt_format = '%Y-%m-%d %H:%M'
 dft_pwd = 'Welcome01'
+incl_ended = False
+
 
 user_list = []
 
-# HANA DB
-db_host = '559888d5-f0af-4907-ad20-fa4d3876e870.hana.prod-eu10.hanacloud.ondemand.com'
-db_user = 'DIREGISTER'
-db_pwd = 'Ted2345!'
-db_port = '443'
 
 ############
 #### Login
@@ -83,10 +87,16 @@ class UserGenerationSelectForm(FlaskForm):
     num_user = IntegerField('Number of User: ', validators=[DataRequired()],default=8)
     offset = IntegerField('Offset: ', default=1)
     num_buffer_user = IntegerField('Number of Buffer User: ', validators=[DataRequired()], default=2)
-    static_pwd = BooleanField('Static Password: ', validators=[DataRequired()],default=True)
+    static_pwd = BooleanField('Static Password: ',default=True)
     len_pwd = IntegerField('Length of Password: ', validators=[DataRequired()],default=8)
     default_pwd = StringField('Default Password: ',validators=[DataRequired()], default=dft_pwd)
     submit = SubmitField('Create')
+
+class UserUploadForm(FlaskForm):
+    selected_events = SelectMultipleField('Workshops (Multi-Selection): ',choices=[], validators=[DataRequired()])
+    usercsv = FileField('Document', validators=[FileRequired(), FileAllowed(['csv'], 'csv only!')])
+    num_buffer = IntegerField('Number of Buffer User',default=0)
+    uploadsubmit = SubmitField('Upload')
 
 class MonitorSelectForm(FlaskForm):
     selected_event = SelectField('',choices=[], validators=[DataRequired()])
@@ -111,12 +121,9 @@ class EditForm(FlaskForm):
     submitsave = SubmitField('Save')
     submitremove = SubmitField('Remove')
 
-class EventFilter(FlaskForm) :
-    incl_ended = BooleanField('Include \"ended registration\"-workshops',default=False)
-    submitrefresh = SubmitField('Refresh')
-
 class UserListForm(FlaskForm) :
-    savedownload = SubmitField('Save&Download')
+    savesubmit = SubmitField('Save')
+    downloadsubmit = SubmitField('Download')
 
 class LoginForm(FlaskForm) :
     username = StringField('User Name',validators=[])
@@ -162,91 +169,114 @@ def login():
 @app.route('/', methods = ['GET', 'POST'])
 @login_required
 def index():
-    events, select_titles = get_workshops(incl_ended=False,user_id=session['_user_id'])
-    eventform = EventFilter()
+    workshops, select_titles = get_workshops(user_id=session['_user_id'])
 
-    if eventform.validate_on_submit():
-        incl_ended = eventform.incl_ended.data
-        events, select_titles = get_workshops(incl_ended=incl_ended,user_id=session['_user_id'] )
+    tbody = list()
+    theader = list()
+    if len(workshops) > 0 :
+        tbody = list(workshops.values())
+        theader = tbody[0].keys()
 
-    return render_template('events.html',form = eventform,dictlist=events.values(),user_id=session['_user_id'])
+    return render_template('workshops.html',table_header =theader,table_body=tbody,user_id=session['_user_id'])
 
 
 @app.route('/monitor', methods = ['GET', 'POST'])
 @login_required
 def monitor():
-    events, select_titles = get_workshops(incl_ended = True,user_id=session['_user_id'])
+    workshops, select_titles = get_workshops(user_id=session['_user_id'])
     form = MonitorSelectForm()
     form.selected_event.choices = select_titles
     if form.validate_on_submit() :
-        event = form.selected_event.data
-        user_list = get_userlist(event)
-        return  render_template('userlist_monitor.html',dictlist = user_list,event = event )
+        workshop = form.selected_event.data
+        user_list = get_userlist(workshop)
+        return  render_template('userlist_monitor.html',dictlist = user_list,event = workshop,user_id=session['_user_id'])
 
-    return render_template('event_selection_monitor.html',form = form,dictlist = events.values(), user_id=session['_user_id'])
+    return render_template('workshop_selection_monitor.html',form = form,dictlist = list(workshops.values()), user_id=session['_user_id'])
 
 @app.route('/generate', methods = ['GET', 'POST'])
 @login_required
 def generate():
-    global event
-    global prefix
-    global user_list
-    events, select_titles = get_workshops(incl_ended = True,user_id=session['_user_id'])
+    events, select_titles = get_workshops(user_id=session['_user_id'])
     form = UserGenerationSelectForm()
     form.selected_events.choices = select_titles
     if form.validate_on_submit() :
-        session['workshop_ids'] = form.selected_events.data
-        session['prefix'] = form.prefix.data
-        session['num_user'] = form.num_user.data
-        session['offset'] = form.offset.data
-        session['num_buffer_user'] = form.num_buffer_user.data
-        session['len_pwd'] = form.len_pwd.data
-        session['default_pwd'] = form.default_pwd.data
-        session['static_pwd'] = form.static_pwd.data
+        user_list = generate_userlist(selected_events=form.selected_events.data,
+                                      prefix=form.prefix.data,
+                                      num_user=form.num_user.data,
+                                      offset=form.offset.data,
+                                      num_buffer_user=form.num_buffer_user.data,
+                                      len_pwd=form.len_pwd.data,
+                                      default_pwd=form.default_pwd.data,
+                                      static_pwd=form.static_pwd.data)
+
+        session['userlist'] = [{'Index': u[0], 'Workshop': u[3], 'User': u[1], 'Password': u[2], 'Buffer': u[4]} for u in
+                         user_list]
 
         return redirect(url_for('userlist'))
 
     return render_template('generate_user.html',form = form, user_id=session['_user_id'])
 
+@app.route('/upload', methods = ['GET', 'POST'])
+@login_required
+def upload():
+    workshops, select_titles = get_workshops(user_id=session['_user_id'])
+    form = UserUploadForm()
+    form.selected_events.choices = select_titles
+    if form.validate_on_submit() :
+        session['workshop_ids'] = form.selected_events.data
+        num_buffer = form.num_buffer.data
+        filename = form.usercsv.data.filename
+        file_ext = os.path.splitext(filename)[1]
+        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+            abort(400)
+        user_df = pd.read_csv(form.usercsv.data,header=None,names=['User','Password'])
+        user_ws_df = pd.DataFrame(columns=['User','Password','Workshop','Buffer'])
+        for w in form.selected_events.data :
+            user_df['Workshop'] = w
+            user_df['Buffer'] = ''
+            user_df.tail(num_buffer)['Buffer'] = 'Y'
+            user_ws_df = user_ws_df.append(user_df.copy(),ignore_index=True)
+        user_ws_df['Index'] = user_ws_df.index
+        user_ws_df['Index'] = user_ws_df['Index'].astype('int16')
+        session['userlist'] = user_ws_df.to_dict(orient='records')
+        return redirect(url_for('userlist'))
+
+    return render_template('upload.html',form = form, user_id=session['_user_id'])
+
 
 @app.route('/userlist', methods = ['GET', 'POST'])
 @login_required
 def userlist() :
-    user_list = generate_userlist(selected_events=session['workshop_ids'],
-                                  prefix=session['prefix'],
-                                  num_user=session['num_user'],
-                                  offset=session['offset'],
-                                  num_buffer_user=session['num_buffer_user'],
-                                  len_pwd=session['len_pwd'],
-                                  default_pwd=session['default_pwd'],
-                                  static_pwd=session['static_pwd'])
-    user_dictlist = [{'Index': u[0], 'Workshop': u[3], 'User': u[1], 'Password': u[2], 'Buffer': u[4]} for u in
-                     user_list]
+
+    user_list = session['userlist']
+    # sort dict
+    user_list = [{'Index':ul['Index'],'User':ul['User'],'Password':ul['Password'],'Workshop':ul['Workshop'],'Buffer':ul['Buffer']} for ul in user_list]
     form = UserListForm()
 
     if form.validate_on_submit() :
-        wss = '-'.join(session['workshop_ids'])
-        save_users(user_list=user_list)
-        filename = 'userlist_' + wss + '_' + str(len(user_list)) + '.csv'
-        csv = '\n'.join([','.join(iuser[1:-1]) for iuser in user_list])
-        flash('User list saved to database!')
-        Response(csv, mimetype="text/csv", headers={"Content-disposition": "attachment; filename={}".format(filename)})
+        if form.savesubmit.data :
+            save_users(user_list=user_list)
+            flash('User list saved to database!')
+        elif form.downloadsubmit.data :
+            filename = 'userlist_sf.csv'
+            csv = '\n'.join(['{},{},{},{}'.format(u['User'],u['Password'],u['Workshop'],u['Buffer']) for u in user_list])
+            flash('User list downloaded!')
+            return Response(csv, mimetype="text/csv", headers={"Content-disposition": "attachment; filename={}".format('userlist_resp.csv')})
 
-
-    return render_template('userlist.html', form = form,dictlist=user_dictlist,user_id = session['_user_id'])
+    return render_template('userlist.html', form = form,dictlist=user_list,user_id = session['_user_id'])
 
 
 @app.route('/edit', methods = ['GET', 'POST'])
 @login_required
 def edit():
     form = EditForm()
-    workshops, ws_titles = get_workshops(incl_ended = True,user_id=session['_user_id'])
+    workshops, ws_titles = get_workshops(user_id=session['_user_id'])
     ws_titles.insert(0,('NEW','NEW'))
     form.selected_event.choices = ws_titles
     if form.validate_on_submit() and form.submitget.data  :
-        event_selected = form.selected_event.data
+        ws_selected = form.selected_event.data
         # POPULATE Selected EVENT
-        if event_selected == 'NEW' :
+        if ws_selected == 'NEW' :
             form.event_id.data = dft_event_id
             form.title.data = dft_title
             now_dt = datetime.utcnow()
@@ -259,15 +289,18 @@ def edit():
             form.url.data = dft_url
         else :
             # POPULATE NEW EVENT
-            event = get_workshop(event_selected)
-            form.event_id.data = event['ID']
-            form.title.data = event['Title']
-            form.event_startdate.data = event["Workshop Start"]
-            form.reg_startdate.data = event["Regist. Start"]
-            form.reg_enddate.data = event["Regist. End"]
-            form.max_user.data = event['Max. User']
-            form.tenant.data = event['Tenant']
-            form.url.data = event['url']
+            msg, workshop = get_workshop(user_id=session['_user_id'],workhop_id=ws_selected)
+            if not msg =='0' :
+                flash(msg)
+            else :
+                form.event_id.data = workshop['ID']
+                form.title.data = workshop['Title']
+                form.event_startdate.data = workshop["Workshop Start"]
+                form.reg_startdate.data = workshop["Regist. Start"]
+                form.reg_enddate.data = workshop["Regist. End"]
+                form.max_user.data = workshop['Max. User']
+                form.tenant.data = workshop['Tenant']
+                form.url.data = workshop['url']
     # SAVE EVENT
     elif form.validate_on_submit() and form.submitsave.data:
         record = {'title':form.title.data,'max_user':form.max_user.data,'url':form.url.data,'registration_start':form.reg_startdate.data,\

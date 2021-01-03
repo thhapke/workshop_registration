@@ -1,6 +1,9 @@
 import string
 import secrets
 
+import datetime
+import pytz
+
 from hdbcli import dbapi
 
 
@@ -16,7 +19,7 @@ db_port = '443'
 ############
 def get_userlist(event) :
     conn = dbapi.connect(address=db_host,port=db_port,user=db_user,password=db_pwd,encrypt=True, sslValidateCertificate=False )
-    sql_command = "select USER, PWD,  USERNAME, REGISTRATION_DATE, BUFFER_USER  from DIREGISTER.USERS WHERE EVENT = \'{}\';".format(event)
+    sql_command = "select USER, PWD,  USERNAME, REGISTRATION_DATE, BUFFER_USER  from DIREGISTER.USERS WHERE WORKSHOP_ID = \'{}\';".format(event)
     cursor = conn.cursor()
     cursor.execute(sql_command)
     rows = cursor.fetchall()
@@ -28,10 +31,10 @@ def get_userlist(event) :
 # remove users from event user list
 def reset_userlist(event) :
     conn = dbapi.connect(address=db_host,port=db_port,user=db_user,password=db_pwd,encrypt=True, sslValidateCertificate=False )
-    sql = "UPDATE DIREGISTER.USERS SET USERNAME = NULL, REGISTRATION_DATE = NULL WHERE EVENT = \'{}\';".format(event)
+    sql = "UPDATE DIREGISTER.USERS SET USERNAME = NULL, REGISTRATION_DATE = NULL WHERE WORKSHOP_ID = \'{}\';".format(event)
     cursor = conn.cursor()
     cursor.execute(sql)
-    sql = "select USER, PWD, USERNAME, REGISTRATION_DATE, BUFFER_USER  from DIREGISTER.USERS WHERE EVENT = \'{}\';".format(event)
+    sql = "select USER, PWD, USERNAME, REGISTRATION_DATE, BUFFER_USER  from DIREGISTER.USERS WHERE WORKSHOP_ID = \'{}\';".format(event)
     cursor = conn.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -73,20 +76,49 @@ def generate_userlist(selected_events, prefix, num_user, offset, num_buffer_user
 
 
 def save_users(user_list):
-    csv = '\n'.join([','.join(iuser[1:-1]) for iuser in user_list])
     conn = dbapi.connect(address=db_host, port=db_port, user=db_user, password=db_pwd, encrypt=True,
                          sslValidateCertificate=False)
     cursor = conn.cursor()
     # Get all workshops for user deletion
-    wss = [w[3]for w in user_list]
+    wss = [w['Workshop']for w in user_list]
     wss = set(wss)
     # DELETE ALL USER
     for w in wss :
-        sql = "DELETE FROM DIREGISTER.USERS WHERE EVENT = \'{}\';".format(w)
+        sql = "DELETE FROM DIREGISTER.USERS WHERE WORKSHOP_ID = \'{}\';".format(w)
         cursor.execute(sql)
-    sql = 'INSERT INTO DIREGISTER.USERS (EVENT, USER, PWD, BUFFER_USER) VALUES (?, ?,?,?)'
-    data = [(user[3],user[1],user[2],user[4]) for user in user_list]
+    sql = 'INSERT INTO DIREGISTER.USERS (WORKSHOP_ID, USER, PWD, BUFFER_USER) VALUES (?, ?,?,?)'
+    data = [(user['Workshop'],user['User'],user['Password'],user['Buffer']) for user in user_list]
     cursor.executemany(sql, data)
     cursor.close()
     conn.close()
 
+def get_user(username,event) :
+    conn = dbapi.connect(address=db_host, port=db_port, user=db_user, password=db_pwd, encrypt=True,
+                         sslValidateCertificate=False)
+    sql_command = "SELECT * FROM DIREGISTER.USERS WHERE \"WORKSHOP_ID\" = \'{}\' AND \"USERNAME\" = \'{}\';".format(event,username)
+    cursor = conn.cursor()
+    cursor.execute(sql_command)
+    row = cursor.fetchone()
+    if row :
+        return row
+    else :
+        return None
+    cursor.close()
+    conn.close()
+
+def create_user(user_name,event) :
+    conn = dbapi.connect(address=db_host, port=db_port, user=db_user, password=db_pwd, encrypt=True,
+                         sslValidateCertificate=False)
+    sql_command = "SELECT TOP 1 USER,PWD FROM DIREGISTER.USERS WHERE USERNAME IS NULL AND BUFFER_USER != 'Y' AND WORKSHOP_ID = \'{}\';".format(event)
+    cursor = conn.cursor()
+    cursor.execute(sql_command)
+    record = cursor.fetchone()
+    if not record :
+        return None
+    nowt = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d, %H:%M:%S")
+    sql_command = "UPDATE DIREGISTER.USERS SET USERNAME = \'{}\', REGISTRATION_DATE = \'{}\' WHERE USER = \'{}\' AND WORKSHOP_ID = \'{}\' ;".\
+        format(user_name,nowt,record[0],event)
+    cursor.execute(sql_command)
+    cursor.close()
+    conn.close()
+    return record

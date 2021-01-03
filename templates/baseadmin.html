@@ -1,6 +1,6 @@
 {% extends "bootstrap/base.html" %}
 
-{% block title %}SAP Data Intelligence{% endblock %}
+{% block title %}Workshop Registration{% endblock %}
 
 {% block head %}
 {{ super() }}
@@ -12,25 +12,32 @@
 {% block navbar %}
 <nav class="navbar navbar-expand-lg navbar-light">
     <div class="container">
-      <a class="navbar-brand" href="/"><img src='/static/SAP_R_grad.png' style="height:50px" class="img-fluid" alt="SAP logo">Data Intelligence</a>
+      <a class="navbar-brand" href="/"><img src='/static/SAP_R_grad.png' style="height:50px" class="img-fluid" alt="SAP logo">Registration</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav">
           <li class="nav-item active">
+            <a class="nav-link" href="/">Workshops<span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item active">
             <a class="nav-link" href="/login">Login<span class="sr-only">(current)</span></a>
           </li>
           <li class="nav-item active">
             <a class="nav-link" href="/edit">Edit<span class="sr-only">(current)</span></a>
           </li>
-          <li class="nav-item active">
-            <a class="nav-link" href="/monitor">Monitor<span class="sr-only">(current)</span></a>
-          </li>
+
             <li class="nav-item active">
             <a class="nav-link" href="/generate">Generate<span class="sr-only">(current)</span></a>
           </li>
             </li>
+              <li class="nav-item active">
+            <a class="nav-link" href="/upload">Upload<span class="sr-only">(current)</span></a>
+          </li>
+              <li class="nav-item active">
+            <a class="nav-link" href="/monitor">Monitor<span class="sr-only">(current)</span></a>
+          </li>
             <li class="nav-item active">
             <a class="nav-link" href="/register">Register<span class="sr-only">(current)</span></a>
           </li>
