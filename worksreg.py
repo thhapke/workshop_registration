@@ -33,10 +33,10 @@ moment = Moment(app)
 event = ''
 prefix = 'TAU'
 dft_event_id = 'NEW_ID'
-dft_title = 'SAP DI Hands-on Workshop'
+dft_title = 'workshop'
 dft_max_user = 40
-dft_tenant = 'default'
-dft_url = 'https://vsystem.ingress.dh-ia37o5zq.dhaas-live.shoot.live.k8s-hana.ondemand.com/login/?redirectUrl=%2Flogin%2F%3FredirectUrl%3D%252Fapp%252Fdatahub-app-launchpad%252F&tenant=default'
+dft_info = ''
+dft_url = 'https://wwww.workshop.com/system'
 dt_format = '%Y-%m-%d %H:%M'
 dft_pwd = 'Welcome01'
 incl_ended = False
@@ -87,8 +87,8 @@ class UserGenerationSelectForm(FlaskForm):
     num_user = IntegerField('Number of User: ', validators=[DataRequired()],default=8)
     offset = IntegerField('Offset: ', default=1)
     num_buffer_user = IntegerField('Number of Buffer User: ', validators=[DataRequired()], default=2)
-    static_pwd = BooleanField('Static Password: ',default=True)
     len_pwd = IntegerField('Length of Password: ', validators=[DataRequired()],default=8)
+    static_pwd = BooleanField('Static Password: ', default=True)
     default_pwd = StringField('Default Password: ',validators=[DataRequired()], default=dft_pwd)
     submit = SubmitField('Create')
 
@@ -116,7 +116,7 @@ class EditForm(FlaskForm):
     regstop_dt = event_dt + timedelta(minutes=15)
     reg_enddate = DateTimeField('Registration End Datetime (Example: 2020-12-31 9:30)', validators=[DataRequired()], format=dt_format,default=regstop_dt)
     max_user = IntegerField("Maximum User",validators=[DataRequired()],default=dft_max_user)
-    tenant = StringField('Tenant: ', validators=[DataRequired()],default=dft_tenant)
+    info = StringField('Info: ', validators=[DataRequired()])
     url = StringField('System ULR: ', validators=[DataRequired()],default= dft_url)
     submitsave = SubmitField('Save')
     submitremove = SubmitField('Remove')
@@ -129,8 +129,8 @@ class LoginForm(FlaskForm) :
     username = StringField('User Name',validators=[])
     password = PasswordField('Password',validators=[])
     submitlogin = SubmitField('Log In')
-    submitregister = SubmitField('Register')
     submitlogout = SubmitField('Log Out')
+    submitregister = SubmitField('Register')
 
 ############
 ### BINDINGS
@@ -285,7 +285,7 @@ def edit():
             form.reg_startdate.data = (event_dt - timedelta(hours=1)).strftime(dt_format)
             form.reg_enddate.data = (event_dt + timedelta(minutes=15)).strftime(dt_format)
             form.max_user.data = dft_max_user
-            form.tenant.data = dft_tenant
+            form.info.data =''
             form.url.data = dft_url
         else :
             # POPULATE NEW EVENT
@@ -299,12 +299,12 @@ def edit():
                 form.reg_startdate.data = workshop["Regist. Start"]
                 form.reg_enddate.data = workshop["Regist. End"]
                 form.max_user.data = workshop['Max. User']
-                form.tenant.data = workshop['Tenant']
+                form.info.data = workshop['Info']
                 form.url.data = workshop['url']
     # SAVE EVENT
     elif form.validate_on_submit() and form.submitsave.data:
         record = {'title':form.title.data,'max_user':form.max_user.data,'url':form.url.data,'registration_start':form.reg_startdate.data,\
-                  'registration_end':form.reg_enddate.data,'tenant':form.tenant.data,'id':form.event_id.data,'workshop_start':form.event_startdate.data}
+                  'registration_end':form.reg_enddate.data,'info':form.info.data,'id':form.event_id.data,'workshop_start':form.event_startdate.data}
         save_event(record,user_id=session['_user_id'])
         flash('Workshop saved: {}'.format(record['id']))
 
@@ -320,7 +320,7 @@ def edit():
         form.reg_startdate.data = (event_dt - timedelta(hours=1)).strftime(dt_format)
         form.reg_enddate.data = (event_dt + timedelta(minutes=15)).strftime(dt_format)
         form.max_user.data = dft_max_user
-        form.tenant.data = dft_tenant
+        form.info.data = dft_info
         form.url.data = dft_url
         workshops, ws_titles = get_workshops(incl_ended = True)
         ws_titles.insert(0, ('NEW', 'NEW'))
