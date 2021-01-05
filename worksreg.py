@@ -30,7 +30,6 @@ moment = Moment(app)
 
 
 # global variable
-event = ''
 prefix = 'TAU'
 dft_event_id = 'NEW_ID'
 dft_title = 'workshop'
@@ -40,9 +39,6 @@ dft_url = 'https://wwww.workshop.com/system'
 dt_format = '%Y-%m-%d %H:%M'
 dft_pwd = 'Welcome01'
 incl_ended = False
-
-
-user_list = []
 
 
 ############
@@ -328,6 +324,10 @@ def edit():
         flash('Workshop removed: {}'.format(removed_workshop))
     return render_template('edit.html', form = form, user_id = session['_user_id'] )
 
+
+@app.route('/help', methods = ['GET', 'POST'])
+def help():
+    return render_template("README.html")
 
 
 if __name__ == '__main__':

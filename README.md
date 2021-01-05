@@ -21,7 +21,7 @@ There are two kinds of access:
 ## Moderator
 
 ### Login ( .../login )
-![Login](./images/login.jpg) 
+![Login](./static/login.jpg) 
 
 Every moderator has in the first place to register with username and password - nothing more is required to create workshops
  and userlists. She furthermore can only create and edit her own workshops and corresponding user lists. 
@@ -30,47 +30,47 @@ Every moderator has in the first place to register with username and password - 
 
 Overview of all workshops. 
 
-![index](./images/workshops.jpg) 
+![index](./static/workshops.jpg) 
 
 ### Edit (../edit)
 
 Enables to create, change or delete workshops.
 
-![Edit](./images/edit.jpg)
+![Edit](./static/edit.jpg)
 
 ### Generate (../generate)
 
 Generates a user list with passwords.  
 
-![Generate](./images/generate.jpg)
+![Generate](./static/generate.jpg)
 
 User list has to be saved in order to be distributed for the registration of participants. 
 The downloaded user list can be used to automatically create the user in the workshop system. 
 
-![Userlist](./images/userlist.jpg)
+![Userlist](./static/userlist.jpg)
 
 ### Upload (../upload)
 
 Enables to upload users that might have already been setup in system used for the workshop.
 
-![Userlist](./images/upload.jpg)
+![Upload](./static/upload.jpg)
 
 ### Monitor
 
 During the registration time (registration_start - registration_end) the moderator may want to have a snapshot how many 
 users might have registered already. 
 
-![Userlist](./images/ws_selection.jpg)
+![WS_selection](./static/ws_selection.jpg)
 
-![Userlist](./images/monitor_details.jpg)
+![Monitor](./static/monitor_details.jpg)
 
 ## Participant
 
 ### Register
 
-![Userlist](./images/register.jpg)
+![Register](./static/register.jpg)
 
-![Userlist](./images/credentials.jpg)
+![Credentials](./static/credentials.jpg)
 
 
 

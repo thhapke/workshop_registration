@@ -1,0 +1,144 @@
+{% extends "baseadmin.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}Help{% endblock %}
+{% block page_content %}
+<div class="page-header">
+    <h1>Documention </h1> </div>
+<div class="text-body"> 
+<h1>Workshop Registration</h1>
+
+<p>This application let you setup workshops and provides a registration page for workshop participants to retrieve their credentials.
+This avoids that at the beginning of a workshop the moderator had to hand the information to each participant manually. The
+developement was triggered by the SAP TechEd2020 when all workshops went virtual but is not an SAP product. </p>
+
+<p>There are two kinds of access:
+</p><ul><li>Moderator for setting up workshops and monitoring the registration </li>
+<ul><li>Login - register newly as moderator and login,logout</li>
+<li>Workshops - lists all your workshops </li>
+<li>Edit - Create a new workshop or edit the existing workshops</li>
+<li>Generate - Generate a user list with dynamic or static passwords for each workshop</li>
+<li>Upload - Upload user list for a workshop </li>
+<li>Monitor - Monitor the users who have registered to the workshop</li>
+</ul><li>Participants</li>
+<ul><li>Register - registering for workshop and getting the credentials provided there are open places</p></li>
+</ul></ul>
+<h1>Usage</h1>
+
+<h2>Moderator</h2>
+
+<h3>Login ( .../login )</h3>
+
+<p><img src="/static/login.jpg" alt="Login" /> </p>
+
+<p>Every moderator has in the first place to register with username and password - nothing more is required to create workshops
+ and userlists. She furthermore can only create and edit her own workshops and corresponding user lists. </p>
+
+<h3>Workshops (../index)</h3>
+
+<p>Overview of all workshops. </p>
+
+<p><img src="/static/workshops.jpg" alt="index" /> </p>
+
+<h3>Edit (../edit)</h3>
+
+<p>Enables to create, change or delete workshops.</p>
+
+<p><img src="/static/edit.jpg" alt="Edit" /></p>
+
+<h3>Generate (../generate)</h3>
+
+<p>Generates a user list with passwords.  </p>
+
+<p><img src="/static/generate.jpg" alt="Generate" /></p>
+
+<p>User list has to be saved in order to be distributed for the registration of participants. 
+The downloaded user list can be used to automatically create the user in the workshop system. </p>
+
+<p><img src="/static/userlist.jpg" alt="Userlist" /></p>
+
+<h3>Upload (../upload)</h3>
+
+<p>Enables to upload users that might have already been setup in system used for the workshop.</p>
+
+<p><img src="/static/upload.jpg" alt="Upload" /></p>
+
+<h3>Monitor</h3>
+
+<p>During the registration time (registration<em>start - registration</em>end) the moderator may want to have a snapshot how many 
+users might have registered already. </p>
+
+<p><img src="/static/ws_selection.jpg" alt="WS_selection" /></p>
+
+<p><img src="/static/monitor_details.jpg" alt="Monitor" /></p>
+
+<h2>Participant</h2>
+
+<h3>Register</h3>
+
+<p><img src="/static/register.jpg" alt="Register" /></p>
+
+<p><img src="/static/credentials.jpg" alt="Credentials" /></p>
+
+<h1>Technical details</h1>
+
+<p>The data is stored currently in a HANA Cloud database and the HDBCLI-client is used to connect to the database. Although
+preferring kind of standards, SQLAlchemy was not used. Maybe in future I give it a try and use the
+<a href="https://github.com/SAP/sqlalchemy-hana/blob/master">SQLAlchemy dialect for SAP HANA</a>. In this case it would be easier to
+replace HANA with a another DB, for what no real reason exists ;).</p>
+
+<p>There are 3 tables: </p>
+
+<ul>
+<li>WORKSHOPS: workshop details (foreign key: <em>MODERATOR</em>)</li>
+<li>USERS: List of users for each workshop (foreign key: <em>WORKSHOP_ID</em>)</li>
+<li>MODERATORS: moderators with credentials (hashed password)</li>
+</ul>
+
+<h2>Table WORKSHOPS</h2>
+
+<p><code>
+CREATE COLUMN TABLE "DIREGISTER"."WORKSHOPS"(
+    "ID" NVARCHAR(15),
+    "TITLE" NVARCHAR(150),
+    "MAX_USER" INTEGER,
+    "URL" NVARCHAR(500),
+    "WORKSHOP_START" LONGDATE,
+    "REGISTRATION_START" LONGDATE,
+    "REGISTRATION_END" LONGDATE,
+    "INFO" NVARCHAR(150),
+    "MODERATOR" NVARCHAR(50),
+    PRIMARY KEY (
+        "ID"
+    )
+)
+</code></p>
+
+<h2>Table USERS</h2>
+
+<p><code>
+CREATE COLUMN TABLE "DIREGISTER"."USERS"(
+    "WORKSHOP_ID" NVARCHAR(30),
+    "USER" NVARCHAR(20),
+    "PWD" NVARCHAR(16),
+    "USERNAME" NVARCHAR(25),
+    "REGISTRATION_DATE" LONGDATE,
+    "BUFFER_USER" NVARCHAR(1)
+)
+</code></p>
+
+<h2>Table MODERATORS</h2>
+
+<p>```
+CREATE COLUMN TABLE "DIREGISTER"."MODERATORS"(
+    "USERNAME" NVARCHAR(30),
+    "PWDHASH" NVARCHAR(128),
+    "EMAIL" NVARCHAR(100),
+    "REGISTRATION_DATE" LONGDATE,
+    PRIMARY KEY (
+        "USERNAME"
+    )
+)</p>
+
+<p>```</p>
+</div>
+{% endblock %}
