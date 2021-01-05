@@ -1,8 +1,8 @@
 ---
 applications:
-- name: monitor
-  host: monitor
-  memory: 256M
-  disk_quota: 512M
+- name: workshop_registration
+  host: workshop_registration
+  memory: 512M
+  disk_quota: 1024M
   timeout: 60
   buildpack: https://github.com/cloudfoundry/buildpack-python.git

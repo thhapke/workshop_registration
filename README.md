@@ -127,7 +127,6 @@ CREATE COLUMN TABLE "DIREGISTER"."MODERATORS"(
 		"USERNAME"
 	)
 )
-
 ```
 
 ## How to obtain support
@@ -140,3 +139,4 @@ The software is under MIT-license.
 
 ## Github
 
+[github.com/thhapke/workshop_registration](https://github.com/thhapke/workshop_registration)

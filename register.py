@@ -5,9 +5,6 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField
 from wtforms.validators import DataRequired
 
-import datetime
-import pytz
-
 from workshops_model import *
 from users_model import *
 

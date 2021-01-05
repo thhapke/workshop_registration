@@ -1,1 +1,1 @@
-web: python monitor_userlist.py
+web: python worksreg.py

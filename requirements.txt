@@ -2,8 +2,10 @@ Flask
 Flask-Bootstrap4
 Flask-Moment
 Flask-WTF
+Flask-login
 jinja2
 WTForms
 requests
 Werkzeug
 hdbcli
+pandas
