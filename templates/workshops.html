@@ -1,11 +1,18 @@
 {% extends "baseadmin.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}DI Register Admin{% endblock %}
+{% block title %}Workshops{% endblock %}
 
 {% block page_content %}
 <div class="page-header">
-    <h2>Workshops  ({{ user_id }})</h2>
+    <h1>Workshops  ({{ user_id }})</h1>
+</div>
+
+<div class="alert alert-info" role="alert">
+    <H4>Register URL for participants</H4> <a href="/register/{{ current_user.get_id() }}" class="alert-link">{{ request.url}}register/{{ current_user.get_id() }}</a><br><br>
+    Cut and paste it for invitation email.
+</div>
+
 
 
 <table class="table">

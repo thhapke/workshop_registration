@@ -74,10 +74,6 @@ users might have registered already.
 
 
 
-
-
-
-
 # Technical details
 The data is stored currently in a HANA Cloud database and the HDBCLI-client is used to connect to the database. Although
 preferring kind of standards, SQLAlchemy was not used. Maybe in future I give it a try and use the
@@ -133,3 +129,14 @@ CREATE COLUMN TABLE "DIREGISTER"."MODERATORS"(
 )
 
 ```
+
+## How to obtain support
+
+Please send an email to **thorsten.hapke@sap.com**
+
+## License
+
+The software is under MIT-license. 
+
+## Github
+

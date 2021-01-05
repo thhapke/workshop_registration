@@ -25,9 +25,9 @@ class WorkshopsForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
-@register.route('/register', methods = [ 'GET', 'POST'])
-def registering():
-    workshops, ws_titles = get_workshops(user_id='anonymous')
+@register.route('/register/<user>', methods = [ 'GET', 'POST'])
+def registering(user):
+    workshops, ws_titles = get_workshops(user_id=user)
     form = WorkshopsForm()
     form.workshop.choices = ws_titles
 
