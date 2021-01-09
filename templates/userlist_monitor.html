@@ -1,6 +1,11 @@
 {% extends "baseadmin.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
+{% block head %}
+    {{ super() }}
+    <meta http-equiv="refresh" content="5"  />
+{% endblock %}
+
 {% block title %}User List{% endblock %}
 
 {% block page_content %}
@@ -28,7 +33,7 @@
     </table>
     <div class="page-header">
    <div class="container" align="left">
-		<a href="/userlist" target="blank"><button class='btn btn-primary'>Refresh</button></a>
+		<!-- <a href="/userlist" target="blank"><button class='btn btn-primary'>Refresh</button></a> -->
         <a href="/reset" target="blank"><button class='btn btn-primary'>Reset</button></a>
    </div>
 {% endblock %}

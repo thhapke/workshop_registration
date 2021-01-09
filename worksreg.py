@@ -112,7 +112,7 @@ class EditForm(FlaskForm):
     regstop_dt = event_dt + timedelta(minutes=15)
     reg_enddate = DateTimeField('Registration End Datetime (Example: 2020-12-31 9:30)', validators=[DataRequired()], format=dt_format,default=regstop_dt)
     max_user = IntegerField("Maximum User",validators=[DataRequired()],default=dft_max_user)
-    info = StringField('Info: ', validators=[DataRequired()])
+    info = StringField('Info: ')
     url = StringField('System ULR: ', validators=[DataRequired()],default= dft_url)
     submitsave = SubmitField('Save')
     submitremove = SubmitField('Remove')
@@ -176,18 +176,27 @@ def index():
     return render_template('workshops.html',table_header =theader,table_body=tbody,user_id=session['_user_id'])
 
 
-@app.route('/monitor', methods = ['GET', 'POST'])
+@app.route('/workshops', methods = ['GET', 'POST'])
 @login_required
-def monitor():
+def workshops():
     workshops, select_titles = get_workshops(user_id=session['_user_id'])
     form = MonitorSelectForm()
     form.selected_event.choices = select_titles
     if form.validate_on_submit() :
-        workshop = form.selected_event.data
-        user_list = get_userlist(workshop)
-        return  render_template('userlist_monitor.html',dictlist = user_list,event = workshop,user_id=session['_user_id'])
+        session['workshop_id'] = form.selected_event.data
+        return redirect(url_for('monitor'))
+        #return  render_template('userlist_monitor.html',dictlist = user_list,event = workshop,user_id=session['_user_id'])
 
     return render_template('workshop_selection_monitor.html',form = form,dictlist = list(workshops.values()), user_id=session['_user_id'])
+
+
+@app.route('/monitor', methods = ['GET', 'POST'])
+@login_required
+def monitor():
+    workshop_id = session['workshop_id']
+    user_list = get_userlist(workshop_id)
+    return render_template('userlist_monitor.html', dictlist=user_list, event=workshop_id, user_id=session['_user_id'])
+
 
 @app.route('/generate', methods = ['GET', 'POST'])
 @login_required
@@ -243,7 +252,6 @@ def upload():
 @app.route('/userlist', methods = ['GET', 'POST'])
 @login_required
 def userlist() :
-
     user_list = session['userlist']
     # sort dict
     user_list = [{'Index':ul['Index'],'User':ul['User'],'Password':ul['Password'],'Workshop':ul['Workshop'],'Buffer':ul['Buffer']} for ul in user_list]

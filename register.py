@@ -22,9 +22,9 @@ class WorkshopsForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
-@register.route('/register/<user>', methods = [ 'GET', 'POST'])
-def registering(user):
-    workshops, ws_titles = get_workshops(user_id=user)
+@register.route('/register/<moderator>', methods = [ 'GET', 'POST'])
+def registering(moderator):
+    workshops, ws_titles = get_workshops(user_id=moderator)
     form = WorkshopsForm()
     form.workshop.choices = ws_titles
 
@@ -60,7 +60,7 @@ def registering(user):
                     return render_template('register.html', form=form)
                 else:
                     return render_template('credentials.html',name = name,user= userpwd[0], pwd = userpwd[1],
-                                           info = info,url = url,ws_title = ws_title,workshop_id = selected_w)
+                                           info = info,url = url,ws_title = ws_title,workshop_id = selected_w,moderator = moderator)
 
     return render_template('register.html', form = form)
 
