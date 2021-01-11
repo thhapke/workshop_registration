@@ -46,8 +46,6 @@ incl_ended = False
 ############
 login_manager = LoginManager()
 login_manager.init_app(app)
-admin_id = 'thhadmin'
-admin_pwd = 'thh2Reg4'
 
 class User(UserMixin) :
     def __init__(self,user):

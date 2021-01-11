@@ -2,6 +2,8 @@
 .idea
 .DS_Store
 
+# config
+config.cfg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

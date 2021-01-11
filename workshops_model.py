@@ -5,10 +5,7 @@ from hdbcli import dbapi
 
 
 # HANA DB
-db_host = '559888d5-f0af-4907-ad20-fa4d3876e870.hana.prod-eu10.hanacloud.ondemand.com'
-db_user = 'DIREGISTER'
-db_pwd = 'Ted2345!'
-db_port = '443'
+#config.cfg
 
 
 def get_workshops(user_id) :
