@@ -9,7 +9,8 @@ from workshops_model import *
 from users_model import *
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'DI302020WSTed'
+app.config.from_object('config.Config')
+db = {'host':app.config['HDB_URI'],'user':app.config['HDB_USER'],'pwd':app.config['HDB_PWD'],'port':app.config['HDB_PORT']}
 
 bootstrap = Bootstrap(app)
 moment = Moment(app)
@@ -24,7 +25,7 @@ class WorkshopsForm(FlaskForm):
 
 @register.route('/register/<moderator>', methods = [ 'GET', 'POST'])
 def registering(moderator):
-    workshops, ws_titles = get_workshops(user_id=moderator)
+    workshops, ws_titles = get_workshops(user_id=moderator,db=db)
     form = WorkshopsForm()
     form.workshop.choices = ws_titles
 

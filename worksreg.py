@@ -20,14 +20,14 @@ import os
 import pandas as pd
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'userListGenthh'
-app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024
-app.config['UPLOAD_EXTENSIONS'] = ['.csv']
+app.config.from_object('config.Config')
+
 app.register_blueprint(register)
 
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 
+db = {'host':app.config['HDB_URI'],'user':app.config['HDB_USER'],'pwd':app.config['HDB_PWD'],'port':app.config['HDB_PORT']}
 
 # global variable
 prefix = 'TAU'
@@ -49,7 +49,7 @@ login_manager.init_app(app)
 
 class User(UserMixin) :
     def __init__(self,user):
-        self.username, self.password_hash = get_moderator(user)
+        self.username, self.password_hash = get_moderator(user,db=db)
         self.id = self.username
 
     @property
@@ -149,7 +149,7 @@ def login():
             elif len(form.username.data) < 6 :
                 flash('Minimum length of user name: 6.')
             else :
-                register_moderator(form.username.data,generate_password_hash(form.password.data))
+                register_moderator(form.username.data,generate_password_hash(form.password.data),db=db)
                 user = User(form.username.data)
                 login_user(user)
                 return redirect(url_for('index'))
@@ -163,7 +163,7 @@ def login():
 @app.route('/', methods = ['GET', 'POST'])
 @login_required
 def index():
-    workshops, select_titles = get_workshops(user_id=session['_user_id'])
+    workshops, select_titles = get_workshops(user_id=session['_user_id'],db=db)
 
     tbody = list()
     theader = list()
@@ -177,7 +177,7 @@ def index():
 @app.route('/workshops', methods = ['GET', 'POST'])
 @login_required
 def workshops():
-    workshops, select_titles = get_workshops(user_id=session['_user_id'])
+    workshops, select_titles = get_workshops(user_id=session['_user_id'],db=db)
     form = MonitorSelectForm()
     form.selected_event.choices = select_titles
     if form.validate_on_submit() :
@@ -199,7 +199,7 @@ def monitor():
 @app.route('/generate', methods = ['GET', 'POST'])
 @login_required
 def generate():
-    events, select_titles = get_workshops(user_id=session['_user_id'])
+    events, select_titles = get_workshops(user_id=session['_user_id'],db=db)
     form = UserGenerationSelectForm()
     form.selected_events.choices = select_titles
     if form.validate_on_submit() :
@@ -222,7 +222,7 @@ def generate():
 @app.route('/upload', methods = ['GET', 'POST'])
 @login_required
 def upload():
-    workshops, select_titles = get_workshops(user_id=session['_user_id'])
+    workshops, select_titles = get_workshops(user_id=session['_user_id'],db=db)
     form = UserUploadForm()
     form.selected_events.choices = select_titles
     if form.validate_on_submit() :
@@ -272,7 +272,7 @@ def userlist() :
 @login_required
 def edit():
     form = EditForm()
-    workshops, ws_titles = get_workshops(user_id=session['_user_id'])
+    workshops, ws_titles = get_workshops(user_id=session['_user_id'],db=db)
     ws_titles.insert(0,('NEW','NEW'))
     form.selected_event.choices = ws_titles
     if form.validate_on_submit() and form.submitget.data  :
@@ -291,7 +291,7 @@ def edit():
             form.url.data = dft_url
         else :
             # POPULATE NEW EVENT
-            msg, workshop = get_workshop(user_id=session['_user_id'],workhop_id=ws_selected)
+            msg, workshop = get_workshop(user_id=session['_user_id'],workhop_id=ws_selected,db=db)
             if not msg =='0' :
                 flash(msg)
             else :

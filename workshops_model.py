@@ -5,11 +5,14 @@ from hdbcli import dbapi
 
 
 # HANA DB
-#config.cfg
+db_host = '559888d5-f0af-4907-ad20-fa4d3876e870.hana.prod-eu10.hanacloud.ondemand.com'
+db_user = 'DIREGISTER'
+db_pwd = 'Ted2345!'
+db_port = '443'
 
 
-def get_workshops(user_id) :
-    conn = dbapi.connect(address=db_host,port=db_port,user=db_user,password=db_pwd,encrypt=True, sslValidateCertificate=False )
+def get_workshops(user_id,db) :
+    conn = dbapi.connect(address=db['host'],port=db['port'],user=db['user'],password=db['pwd'],encrypt=True, sslValidateCertificate=False )
 
     sql = "SELECT ID,TITLE,WORKSHOP_START,REGISTRATION_START,REGISTRATION_END,MAX_USER, INFO, URL, MODERATOR "\
                  "FROM DIREGISTER.WORKSHOPS"
@@ -37,8 +40,8 @@ def get_workshops(user_id) :
         ws_titles = []
     return wss, ws_titles
 
-def get_workshop(user_id,workhop_id ) :
-    conn = dbapi.connect(address=db_host,port=db_port,user=db_user,password=db_pwd,encrypt=True, sslValidateCertificate=False )
+def get_workshop(user_id,workhop_id,db ) :
+    conn = dbapi.connect(address=db['host'],port=db['port'],user=db['user'],password=db['pwd'],encrypt=True, sslValidateCertificate=False )
 
     sql_command = "SELECT ID,TITLE,WORKSHOP_START,REGISTRATION_START,REGISTRATION_END,MAX_USER, INFO, URL, MODERATOR "\
                   "FROM DIREGISTER.WORKSHOPS WHERE ID = \'{}\';".format(workhop_id)
@@ -58,8 +61,8 @@ def get_workshop(user_id,workhop_id ) :
 
     return '0',ws
 
-def save_event(record,user_id) :
-    conn = dbapi.connect(address=db_host, port=db_port, user=db_user, password=db_pwd, encrypt=True,
+def save_event(record,user_id,db) :
+    conn = dbapi.connect(address=db['host'],port=db['port'],user=db['user'],password=db['pwd'], encrypt=True,
                          sslValidateCertificate=False)
     sql_command = "UPSERT DIREGISTER.WORKSHOPS (\"ID\",\"TITLE\",\"MAX_USER\",\"URL\",\"WORKSHOP_START\",\"REGISTRATION_START\","\
                   "\"REGISTRATION_END\",\"INFO\",\"MODERATOR\") VALUES" \
@@ -72,8 +75,8 @@ def save_event(record,user_id) :
     conn.close()
     return
 
-def remove_event(ws_id) :
-    conn = dbapi.connect(address=db_host, port=db_port, user=db_user, password=db_pwd, encrypt=True,
+def remove_event(ws_id,db) :
+    conn = dbapi.connect(address=db['host'],port=db['port'],user=db['user'],password=db['pwd'], encrypt=True,
                          sslValidateCertificate=False)
     sql_command = "DELETE FROM DIREGISTER.WORKSHOPS WHERE ID = \'{}\';".format(ws_id)
     cursor = conn.cursor()

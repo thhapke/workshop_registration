@@ -7,15 +7,11 @@ import pytz
 from hdbcli import dbapi
 
 
-# HANA DB
-# config.cfg
-
-
 ############
 ### User Methods
 ############
-def get_userlist(event) :
-    conn = dbapi.connect(address=db_host,port=db_port,user=db_user,password=db_pwd,encrypt=True, sslValidateCertificate=False )
+def get_userlist(event,db) :
+    conn = dbapi.connect(address=db['host'],port=db['port'],user=db['user'],password=db['pwd'],encrypt=True, sslValidateCertificate=False )
     sql_command = "select USER, PWD,  USERNAME, REGISTRATION_DATE, BUFFER_USER  from DIREGISTER.USERS WHERE WORKSHOP_ID = \'{}\';".format(event)
     cursor = conn.cursor()
     cursor.execute(sql_command)
@@ -26,8 +22,8 @@ def get_userlist(event) :
     return userlist
 
 # remove users from event user list
-def reset_userlist(event) :
-    conn = dbapi.connect(address=db_host,port=db_port,user=db_user,password=db_pwd,encrypt=True, sslValidateCertificate=False )
+def reset_userlist(event,db) :
+    conn = dbapi.connect(address=db['host'],port=db['port'],user=db['user'],password=db['pwd'],encrypt=True, sslValidateCertificate=False )
     sql = "UPDATE DIREGISTER.USERS SET USERNAME = NULL, REGISTRATION_DATE = NULL WHERE WORKSHOP_ID = \'{}\';".format(event)
     cursor = conn.cursor()
     cursor.execute(sql)
@@ -72,8 +68,8 @@ def generate_userlist(selected_events, prefix, num_user, offset, num_buffer_user
     return iup
 
 
-def save_users(user_list):
-    conn = dbapi.connect(address=db_host, port=db_port, user=db_user, password=db_pwd, encrypt=True,
+def save_users(user_list,db):
+    conn = dbapi.connect(address=db['host'],port=db['port'],user=db['user'],password=db['pwd'], encrypt=True,
                          sslValidateCertificate=False)
     cursor = conn.cursor()
     # Get all workshops for user deletion
@@ -89,8 +85,8 @@ def save_users(user_list):
     cursor.close()
     conn.close()
 
-def get_user(username,event) :
-    conn = dbapi.connect(address=db_host, port=db_port, user=db_user, password=db_pwd, encrypt=True,
+def get_user(username,event,db) :
+    conn = dbapi.connect(address=db['host'],port=db['port'],user=db['user'],password=db['pwd'], encrypt=True,
                          sslValidateCertificate=False)
     sql_command = "SELECT * FROM DIREGISTER.USERS WHERE \"WORKSHOP_ID\" = \'{}\' AND \"USERNAME\" = \'{}\';".format(event,username)
     cursor = conn.cursor()
@@ -103,8 +99,8 @@ def get_user(username,event) :
     cursor.close()
     conn.close()
 
-def create_user(user_name,event) :
-    conn = dbapi.connect(address=db_host, port=db_port, user=db_user, password=db_pwd, encrypt=True,
+def create_user(user_name,event,db) :
+    conn = dbapi.connect(address=db['host'],port=db['port'],user=db['user'],password=db['pwd'], encrypt=True,
                          sslValidateCertificate=False)
     sql_command = "SELECT TOP 1 USER,PWD FROM DIREGISTER.USERS WHERE USERNAME IS NULL AND BUFFER_USER != 'Y' AND WORKSHOP_ID = \'{}\';".format(event)
     cursor = conn.cursor()
