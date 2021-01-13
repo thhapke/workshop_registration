@@ -3,10 +3,6 @@ import secrets
 
 from hdbcli import dbapi
 
-# HANA DB
-# config
-
-
 ############
 ### User Methods
 ############
