@@ -307,7 +307,7 @@ def edit():
     elif form.validate_on_submit() and form.submitsave.data:
         record = {'title':form.title.data,'max_user':form.max_user.data,'url':form.url.data,'registration_start':form.reg_startdate.data,\
                   'registration_end':form.reg_enddate.data,'info':form.info.data,'id':form.event_id.data,'workshop_start':form.event_startdate.data}
-        save_event(record,user_id=session['_user_id'])
+        save_event(record,user_id=session['_user_id'],db = db)
         flash('Workshop saved: {}'.format(record['id']))
 
     # REMOVE EVENT
