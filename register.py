@@ -49,13 +49,13 @@ def registering(moderator):
             url = workshops[selected_w]['url']
             ws_title = workshops[selected_w]['Title']
             # test if user exist
-            user_data = get_user(name,selected_w)
+            user_data = get_user(name,selected_w, db = db)
             if user_data :
                 flash("User exists already - If you have not registered already choose another username.")
                 return render_template('credentials.html',name = name,user= user_data[1], pwd = user_data[2],
                                        info = info,url = url,ws_title = ws_title)
             else:
-                userpwd = create_user(name,selected_w)
+                userpwd = create_user(name,selected_w,db=db)
                 if not userpwd:
                     flash("No Users available anymore.")
                     return render_template('register.html', form=form)

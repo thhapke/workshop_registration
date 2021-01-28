@@ -119,6 +119,9 @@ class UserListForm(FlaskForm) :
     savesubmit = SubmitField('Save')
     downloadsubmit = SubmitField('Download')
 
+class MonitorUserForm(FlaskForm) :
+    reset = SubmitField('Reset')
+
 class LoginForm(FlaskForm) :
     username = StringField('User Name',validators=[])
     password = PasswordField('Password',validators=[])
@@ -192,8 +195,11 @@ def workshops():
 @login_required
 def monitor():
     workshop_id = session['workshop_id']
-    user_list = get_userlist(workshop_id)
-    return render_template('userlist_monitor.html', dictlist=user_list, event=workshop_id, user_id=session['_user_id'])
+    user_list = get_userlist(workshop_id,db=db)
+    form = MonitorUserForm()
+    if form.validate_on_submit():
+        reset_userlist(workshop_id, db=db)
+    return render_template('userlist_monitor.html', form = form,dictlist=user_list, event=workshop_id, user_id=session['_user_id'])
 
 
 @app.route('/generate', methods = ['GET', 'POST'])
@@ -257,7 +263,7 @@ def userlist() :
 
     if form.validate_on_submit() :
         if form.savesubmit.data :
-            save_users(user_list=user_list)
+            save_users(user_list=user_list,db=db)
             flash('User list saved to database!')
         elif form.downloadsubmit.data :
             filename = 'userlist_sf.csv'
